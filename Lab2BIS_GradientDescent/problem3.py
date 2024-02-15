@@ -51,7 +51,7 @@ import numpy as np
 ##### Gradient oracle
 def f_grad(x):
 
-	return  0.0 ### To complete
+	return np.zeros((2,)) ### To complete
 ####
 
 
@@ -62,7 +62,8 @@ import numpy as np
 
 ##### Hessian scaled Gradient computation
 def f_grad_hessian(x):
-                
-	return g,H ### To complete
+    g = f_grad(x)
+
+    return g,np.zeros((2, 2)) ### To complete
 ####
 

@@ -48,13 +48,15 @@ L = 8        # Lipschitz constant of the gradient
 
 import numpy as np
 
+
 ##### Gradient oracle
 def f_grad(x):
-    x1 = x[0]
-    x2 = x[1]
-    gx = 0  ## To complete
-    gy = 0  ## To complete
-    return np.array( [ gx  ,  gy  ] )
+    x, y = x[0], x[1]
+    u = lambda x,y : np.exp(4 * (x - 3)**2) + np.exp(2 * (y - 1)**2)
+
+    df_dx = 8*(x - 3)*np.exp(4*(x - 3)**2)/(u(x, y) + 1)
+    df_dy = 4*(y - 1)*np.exp(2*(y - 1)**2)/(u(x, y) + 1)
+    return np.array( [ df_dx  ,  df_dy ] )
 ####
 
 
@@ -65,7 +67,16 @@ import numpy as np
 
 ##### Hessian scaled Gradient computation
 def f_grad_hessian(x):
+    g = f_grad(x)
+    x, y = x[0], x[1]
+    u = lambda x,y : np.exp(4 * (x - 3)**2) + np.exp(2 * (y - 1)**2)
 
+    d2f_dx2 = 8*((u(x, y) + 1)*(8*(x - 3)**2 + 1) - 8*(x - 3)**2*np.exp(4*(x - 3)**2))*np.exp(4*(x - 3)**2)/(u(x, y) + 1)**2
+    d2f_dy2 = 4*((u(x, y) + 1)*(4*(y - 1)**2 + 1) - 4*(y - 1)**2*np.exp(2*(y - 1)**2))*np.exp(2*(y - 1)**2)/(u(x, y) + 1)**2
+    d2f_dx_dy = -32*(x - 3)*(y - 1)*np.exp(4*(x - 3)**2 + 2*(y - 1)**2)/(u(x, y) + 1)**2
+
+    H = np.array([[d2f_dx2, d2f_dx_dy],
+                  [d2f_dx_dy, d2f_dy2]])
     return g,H
 ####
 
