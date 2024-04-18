@@ -52,34 +52,53 @@ import torch.optim as optim
 
 from tqdm import tqdm_notebook as tqdm
 ##define train function
-def train(model, device, train_loader, optimizer, log_interval=10000):
+
+def train(model, loader, optimizer, loss_fn, load=1, device="cpu", log_interval=10000):
     model.train()
+    train_loader = loader
     tk0 = tqdm(train_loader, total=int(len(train_loader)))
     counter = 0
+    batch_size = loader.batch_size
+    i = 0
+    n = len(loader.dataset)
+
     for batch_idx, (data, target) in enumerate(tk0):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
-        loss = F.nll_loss(output, target)
+        loss = loss_fn(output, target)
         loss.backward()
         optimizer.step()
         counter += 1
         tk0.set_postfix(loss=(loss.item()*data.size(0) / (counter * train_loader.batch_size)))
+        i += batch_size
+        if i/n >= load:
+            break
+
+
+            
 ##define test function
-def test(model, device, test_loader):
+def test(model, loss_fn, loader,device="cpu", load=1, noprint=False):
+    batch_size = loader.batch_size
     model.eval()
     test_loss = 0
     correct = 0
+    i = 0
+    n = len(loader.dataset)
     with torch.no_grad():
-        for data, target in test_loader:
+        for data, target in loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction='sum').item() # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
-    test_loss /= len(test_loader.dataset)
+            i += batch_size
+            if i/n >= load:
+                break
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+    test_loss /= i
+    if not noprint:
+        print(f'Average loss: {test_loss:.4f}, Correct/Tested: {correct}/{i} ({100. * correct / i:.0f}%)')
+    return test_loss
+
 
